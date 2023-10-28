@@ -1,5 +1,5 @@
 PROG = lab05
-OBJS = scan.o
+OBJS = scan.o 
 DEBUG = -g
 
 $(PROG) : $(OBJS)

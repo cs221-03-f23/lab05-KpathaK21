@@ -1,4 +1,5 @@
-#define SCAN_TOKEN_LEN 32
+
+ #define SCAN_TOKEN_LEN 32
 #define SCAN_TOKEN_TABLE_LEN 1024
 
 enum scan_token_enum {

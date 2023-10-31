@@ -1,4 +1,3 @@
-#include <ctype.h> // for isxdigit
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -74,23 +73,50 @@ char *scan_intlit(struct scan_token_st *tp, char *p, char *end) {
   return scan_read_token(tp, p, len, TK_INTLIT);
 }
 
+bool scan_is_binlit(char c) {
+	return c == '0' || c == '1';
+}
 char *scan_binlit(struct scan_token_st *tp, char *p, char *end) {
   int len = 0;
-  while (p + len < end &&
-         (p[len] == '0' || p[len] == '1' || (p[len] == 'b' && len == 1) ||
-          (p[len] == 'B' && len == 1))) {
-    len++;
-  }
-  return scan_read_token(tp, p, len, TK_BINLIT);
+    
+        
+        while ((p+len) < end && scan_is_binlit(p[len]) && (p[len+1] == 'b' || p[len+1] == 'B')) { //
+
+			tp->name[len] = *p;
+            p++;     
+        }
+
+        tp->name[len] = '\0';
+        tp->id  = TK_BINLIT;
+    
+   return p;
+   
 }
 
+
+bool scan_is_hexlit(char c) {
+
+	return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' || c <= 'F');	
+}
+
+
 char *scan_hexlit(struct scan_token_st *tp, char *p, char *end) {
-  int len = 0;
-  while (p + len < end && (isxdigit(p[len]) || (p[len] == 'x' && len == 1) ||
-                           (p[len] == 'X' && len == 1))) {
-    len++;
-  }
-  return scan_read_token(tp, p, len, TK_HEXLIT);
+    int len = 0;
+    
+        
+        while ((p+len) < end && scan_is_hexlit(p[len]) && (p[len+1] == 'b' || p[len+1] == 'B')) {
+
+        	tp->name[len] = *p;
+        	len++;
+            p++;
+        }
+
+		tp->name[len] = '\0';
+        tp->id = TK_HEXLIT;
+    
+
+    return p;
+  
 }
 
 char *scan_token(struct scan_token_st *tp, char *p, char *end) {
@@ -99,6 +125,10 @@ char *scan_token(struct scan_token_st *tp, char *p, char *end) {
   } else if (scan_is_whitespace(*p)) {
     p = scan_whitespace(p, end);
     p = scan_token(tp, p, end);
+  } else if (*p == '0' && p+2 < end && (*(p+1)  == 'b' || *(p+1) == 'B')) {    
+    p = scan_binlit(tp, p+2, end);
+  } else if (*p == '0' && p+2 < end && (*(p+1)  == 'x' || *(p+1) == 'X')) {
+    p = scan_hexlit(tp, p+2, end);
   } else if (scan_is_digit(*p)) {
     p = scan_intlit(tp, p, end);
   } else if (*p == '+') {
@@ -113,11 +143,10 @@ char *scan_token(struct scan_token_st *tp, char *p, char *end) {
     p = scan_read_token(tp, p, 1, TK_LPAREN);
   } else if (*p == ')') {
     p = scan_read_token(tp, p, 1, TK_RPAREN);
-  } else if (*p == '0' && (p[1] == 'b' || p[1] == 'B')) {
-    p = scan_binlit(tp, p, end);
-  } else if (*p == '0' && (p[1] == 'x' || p[1] == 'X')) {
-    p = scan_hexlit(tp, p, end);
-  }
+  } else{
+    printf("unknown input.");
+    exit (-1);
+  } 
   return p;
 }
 

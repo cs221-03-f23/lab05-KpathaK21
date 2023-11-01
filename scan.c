@@ -64,60 +64,58 @@ bool scan_is_digit(char c) {
 	return c >= '0' && c <= '9'; 
 }
 
-char *scan_intlit(struct scan_token_st *tp, char *p, char *end) {
+char *scan_intlit(struct scan_token_st *tp, char *p) {
+ tp->id = TK_INTLIT;
   int len = 0;
-  while (p + len < end &&
-         (scan_is_digit(p[len]) || (p[len] == '-' && len == 0))) {
+  while (scan_is_digit(*p)) {
+  	tp->name[len] = *p;
+  	p++;
     len++;
   }
-  return scan_read_token(tp, p, len, TK_INTLIT);
+  tp->name[len] ='\0';
+  return p;
 }
 
-bool scan_is_binlit(char c) {
-	return c == '0' || c == '1';
-}
-char *scan_binlit(struct scan_token_st *tp, char *p, char *end) {
+char *scan_binlit(struct scan_token_st *tp, char *p) {
+ tp->id  = TK_BINLIT;
   int len = 0;
-    
-        
-        while ((p+len) < end && scan_is_binlit(p[len]) && (p[len+1] == 'b' || p[len+1] == 'B')) { //
 
-			tp->name[len] = *p;
-            p++;     
-        }
-
-        tp->name[len] = '\0';
-        tp->id  = TK_BINLIT;
-    
-   return p;
-   
-}
-
-
-bool scan_is_hexlit(char c) {
-
-	return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' || c <= 'F');	
-}
-
-
-char *scan_hexlit(struct scan_token_st *tp, char *p, char *end) {
-    int len = 0;
-    
-        
-        while ((p+len) < end && scan_is_hexlit(p[len]) && (p[len+1] == 'b' || p[len+1] == 'B')) {
-
+       while (*p =='1' || *p == '0') { 
         	tp->name[len] = *p;
-        	len++;
-            p++;
-        }
+			p++;
+			len++;
+			  
+       }
+        tp->name[len] = '\0';
+    
+   return p;   
+}
 
-		tp->name[len] = '\0';
-        tp->id = TK_HEXLIT;
+
+
+char *scan_hexlit(struct scan_token_st *tp, char *p) {
+	 tp->id = TK_HEXLIT;
+    int len = 0;
+    bool scan_is_hexlit = true;
+        
+        while (scan_is_hexlit) {
+          if(scan_is_digit(*p) ||  (*p >= 'A' && *p <= 'F') ||(*p >= 'a' && *p <= 'f')){
+        	tp->name[len] = *p;
+        	p++;
+        	len++;
+         }else {
+        	scan_is_hexlit  = false;
+        }
+	
+		
+       }
+        tp->name[len] = '\0';
     
 
-    return p;
-  
+    return p; 
 }
+
+
 
 char *scan_token(struct scan_token_st *tp, char *p, char *end) {
   if (p == end) {
@@ -125,12 +123,17 @@ char *scan_token(struct scan_token_st *tp, char *p, char *end) {
   } else if (scan_is_whitespace(*p)) {
     p = scan_whitespace(p, end);
     p = scan_token(tp, p, end);
-  } else if (*p == '0' && p+2 < end && (*(p+1)  == 'b' || *(p+1) == 'B')) {    
-    p = scan_binlit(tp, p+2, end);
-  } else if (*p == '0' && p+2 < end && (*(p+1)  == 'x' || *(p+1) == 'X')) {
-    p = scan_hexlit(tp, p+2, end);
+  } else if (*p == 0){
+  	p++;
+  	if(*p == 'b'|| *p == 'B') {
+  		p++;
+  		p = scan_binlit(tp, p);
+  	}else if (*p == 'x' || *p == 'X'){
+  		p++;
+  		p = scan_hexlit(tp, p);
+  	}
   } else if (scan_is_digit(*p)) {
-    p = scan_intlit(tp, p, end);
+    p = scan_intlit(tp, p);
   } else if (*p == '+') {
     p = scan_read_token(tp, p, 1, TK_PLUS);
   } else if (*p == '-') {
